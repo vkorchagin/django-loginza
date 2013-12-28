@@ -43,19 +43,30 @@ class UserMapManager(models.Manager):
                 loginza_email = loginza_data.get('email', '')
                 email = loginza_email if '@' in loginza_email else settings.DEFAULT_EMAIL
 
+                loginza_nickname = loginza_data.get('nickname', None)
+
+                # If nickname is not set - try to get it from first name
+                if loginza_nickname is None or loginza_nickname == "":
+                    # Try to obtain name from first name
+                    try:
+                        loginza_nickname = loginza_data['name']['first_name']
+                    except KeyError:
+                        loginza_nickname = None
+
                 # if nickname is not set - try to get it from email
                 # e.g. vgarvardt@gmail.com -> vgarvardt
-                loginza_nickname = loginza_data.get('nickname', None)
                 if loginza_nickname is None or loginza_nickname == "":
                     username = email.split('@')[0]
                 else:
                     username = loginza_nickname
 
                 # check duplicate user name
+                username_counter = 1
                 while True:
                     try:
                         existing_user = User.objects.get(username=username)
-                        username = '%s%d' % (username, existing_user.id)
+                        username = '%s%d' % (username, username_counter)
+                        username_counter += 1
                     except User.DoesNotExist:
                         break
 
